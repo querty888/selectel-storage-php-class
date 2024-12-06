@@ -20,7 +20,7 @@
     "require": {
         "php": ">=8.4"
     },
-    "version": "1.1.0",
+    "version": "1.1.1",
     "autoload": {
         "psr-4": {
             "querty888\\selectel\\storage\\": "src"
