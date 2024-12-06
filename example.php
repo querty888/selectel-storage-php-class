@@ -1,12 +1,12 @@
 <?php
 
-require_once("vendor/autoload.php");
+require_once(__DIR__ . "/vendor/autoload.php");
 
 try {
-    $selectelStorage = new easmith\selectel\storage\SelectelStorage("user", "pass");
+    $selectelStorage = new querty888\selectel\storage\SelectelStorage("user", "pass");
 
     echo "\n\nCreate Container:\n";
-    $container = $selectelStorage->createContainer('selectel', array("X-Container-Meta-Type: public"));
+    $container = $selectelStorage->createContainer('selectel', ["X-Container-Meta-Type: public"]);
     // print_r($container->getInfo());
 
     echo "Containers list\n";
@@ -56,7 +56,7 @@ try {
     print_r($MetaTempURLKeyRes);
     echo "\n\n";
 
-} catch (Exception $e) {
-    print_r($e->getTrace());
+} catch (Exception $exception) {
+    print_r($exception->getTrace());
 }
 

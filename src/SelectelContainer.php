@@ -1,11 +1,11 @@
 <?php
 
-namespace easmith\selectel\storage;
+namespace querty888\selectel\storage;
 
 /**
  * Selectel Storage Container PHP class
  *
- * PHP version 5
+ * PHP version 5 up to php 8.4 by querty888
  *
  * @author   Eugene Smith <easmith@mail.ru>
  */
@@ -19,11 +19,11 @@ class SelectelContainer extends SelectelStorage
      */
     private $info;
 
-    public function __construct($url, $token = array(), $format = null, $info = array())
+    public function __construct($url, $token = [], $format = null, $info = [])
     {
         $this->url = $url . "/";
         $this->token = $token;
-        $this->format = (!in_array($format, $this->formats, true) ? $this->format : $format);
+        $this->format = (in_array($format, $this->formats, true) ? $format : $this->format);
         $this->info = (count($info) === 0 ? $this->getInfo(true) : $info);
     }
 
@@ -45,7 +45,7 @@ class SelectelContainer extends SelectelStorage
             ->request("HEAD")
             ->getHeaders();
 
-        if (!in_array($headers["HTTP-Code"], array(204))) {
+        if ($headers["HTTP-Code"] != 204) {
             return $this->error($headers["HTTP-Code"], __METHOD__);
         }
 
@@ -61,19 +61,16 @@ class SelectelContainer extends SelectelStorage
      * If-Modified-Since
      * If-Unmodified-Since
      *
-     * @param string $name
      * @param array $headers
-     *
      * @return array
      */
-    public function getFile($name, $headers = array())
+    public function getFile(string $name, $headers = [])
     {
         $headers = array_merge($headers, $this->token);
-        $res = SCurl::init($this->url . $name)
+        return SCurl::init($this->url . $name)
             ->setHeaders($headers)
             ->request("GET")
             ->getResult();
-        return $res;
     }
 
     /**
@@ -104,14 +101,7 @@ class SelectelContainer extends SelectelStorage
      */
     public function listFiles($limit = 10000, $marker = null, $prefix = null, $path = null, $delimiter = null, $format = null)
     {
-        $params = array(
-            'limit' => $limit,
-            'marker' => $marker,
-            'prefix' => $prefix,
-            'path' => $path,
-            'delimiter' => $delimiter,
-            'format' => (!in_array($format, $this->formats, true) ? $this->format : $format)
-        );
+        $params = ['limit' => $limit, 'marker' => $marker, 'prefix' => $prefix, 'path' => $path, 'delimiter' => $delimiter, 'format' => (in_array($format, $this->formats, true) ? $format : $this->format)];
 
         $res = SCurl::init($this->url)
             ->setHeaders($this->token)
@@ -134,18 +124,19 @@ class SelectelContainer extends SelectelStorage
      *
      * @return array
      */
-    public function putFile($localFileName, $remoteFileName = null, $headers = array())
+    public function putFile($localFileName, $remoteFileName = null, $headers = [])
     {
         if (is_null($remoteFileName)) {
             $remoteFileName = array_pop(explode(DIRECTORY_SEPARATOR, $localFileName));
         }
+        
         $headers = array_merge($headers, $this->token);
         $info = SCurl::init($this->url . $remoteFileName)
             ->setHeaders($headers)
             ->putFile($localFileName)
             ->getInfo();
 
-        if (!in_array($info["http_code"], array(201))) {
+        if ($info["http_code"] != 201) {
             return $this->error($info["http_code"], __METHOD__);
         }
 
@@ -166,7 +157,7 @@ class SelectelContainer extends SelectelStorage
             ->putFileContents($contents)
             ->getInfo();
 
-        if (!in_array($info["http_code"], array(201))) {
+        if ($info["http_code"] != 201) {
             return $this->error($info["http_code"], __METHOD__);
         }
 
@@ -184,7 +175,7 @@ class SelectelContainer extends SelectelStorage
     public function setFileHeaders($name, $headers)
     {
         $headers = $this->getX($headers, "X-Container-Meta-");
-        if (get_class($this) != 'SelectelContainer') {
+        if (get_class($this) !== 'SelectelContainer') {
             return 0;
         }
 
@@ -198,15 +189,14 @@ class SelectelContainer extends SelectelStorage
      *
      * @return array
      */
-    public function createDirectory($name)
+    public function createDirectory(string $name)
     {
-        $headers = array_merge(array("Content-Type: application/directory"), $this->token);
-        $info = SCurl::init($this->url . $name)
+        $headers = array_merge(["Content-Type: application/directory"], $this->token);
+
+        return SCurl::init($this->url . $name)
             ->setHeaders($headers)
             ->request("PUT")
             ->getInfo();
-
-        return $info;
     }
 
 }

@@ -1,12 +1,14 @@
 selectel-storage-php-class
 ==========================
+up to php 8.4
+
 
 composer.json
 
 ```js
 
 "require": {
-    "easmith/selectel-storage": "~1.0",
+    "querty888/selectel-storage": "^1.1",
 }
 
 ```
@@ -15,14 +17,14 @@ composer.json
 
 <?php
     
-require_once("vendor/autoload.php");
+require_once(__DIR__ . "/vendor/autoload.php");
 $selectelStorage = new SelectelStorage("User", "Pass");
 
 ```
 
 ### Create Container 
 ```php
-$container = $selectelStorage->createContainer('selectel', array("X-Container-Meta-Type: public"));
+$container = $selectelStorage->createContainer('selectel', ["X-Container-Meta-Type: public"]);
 // get container info
 $container->getInfo()
 ```
@@ -68,3 +70,10 @@ $copyRes = $container->copy('example.php', 'php/test/Examples_copy.php5');
 ```php
 $deleteRes = $container->delete('example.php');
 ```
+## Авторы
+- Оригинальный автор: Eugene Kuznetcov aka Eugene Smith 
+fork easmith/selectel-storage-php-class
+- Автор: querty888
+
+## Лицензия
+Этот проект лицензирован под LGPL-3.0+.

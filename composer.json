@@ -1,5 +1,5 @@
 {
-    "name": "easmith/selectel-storage",
+    "name": "querty888/selectel-storage",
     "description": "Selectel Storage API php wrapper",
     "minimum-stability": "stable",
     "license": "LGPL-3.0+",
@@ -7,19 +7,23 @@
         {
             "name": "Eugene Smith",
             "role": "Developer"
+        },
+        {
+            "name": "querty888",
+            "role": "Contributor"
         }
     ],
     "support": {
-        "issues": "https://github.com/easmith/selectel-storage-php-class/issues",
-        "source": "https://github.com/easmith/selectel-storage-php-class"
+        "issues": "https://github.com/querty888/selectel-storage-php-class/issues",
+        "source": "https://github.com/querty888/selectel-storage-php-class"
     },
     "require": {
-        "php": ">=5.4"
+        "php": ">=8.4"
     },
-    "version": "1.0.3",
+    "version": "1.1.0",
     "autoload": {
         "psr-4": {
-            "easmith\\selectel\\storage\\": "src"
+            "querty888\\selectel\\storage\\": "src"
         }
     }
 }
