@@ -1,11 +1,11 @@
 <?php
 
-namespace easmith\selectel\storage;
+namespace querty888\selectel\storage;
 
 /**
  * Selectel Storage PHP class
  *
- * PHP version 5
+ * PHP version 5 up to php 8.4 by querty888
  *
  * @author   Eugene Smith <easmith@mail.ru>
  */
@@ -18,30 +18,34 @@ class SelectelStorage
      * @var boolean
      */
     protected static $throwExceptions = true;
+    
     /**
      * Header string in array for authtorization.
      *
      * @var array()
      */
-    protected $token = array();
+    protected $token = [];
+    
     /**
      * Storage url
      *
      * @var string
      */
     protected $url = '';
+    
     /**
      * The response format
      *
      * @var string
      */
     protected $format = '';
+    
     /**
      * Allowed response formats
      *
      * @var array
      */
-    protected $formats = array('', 'json', 'xml');
+    protected $formats = ['', 'json', 'xml'];
 
     /**
      * Creating Selectel Storage PHP class
@@ -52,23 +56,26 @@ class SelectelStorage
      *
      * @return SelectelStorage
      */
-    public function __construct($user, $key, $format = null)
+    public function __construct(string $user, string $key, $format = null)
     {
         $header = SCurl::init("https://auth.selcdn.ru/")
-            ->setHeaders(array("Host: auth.selcdn.ru", "X-Auth-User: {$user}", "X-Auth-Key: {$key}"))
+            ->setHeaders(["Host: auth.selcdn.ru", 'X-Auth-User: ' . $user, 'X-Auth-Key: ' . $key])
             ->request("GET")
             ->getHeaders();
 
         if ($header["HTTP-Code"] != 204) {
-            if ($header["HTTP-Code"] == 403)
-                return $this->error($header["HTTP-Code"], "Forbidden for user '{$user}'");
+            if ($header["HTTP-Code"] == 403) {
+                $this->error($header["HTTP-Code"], sprintf("Forbidden for user '%s'", $user));
+                return;
+            }
 
-            return $this->error($header["HTTP-Code"], __METHOD__);
+            $this->error($header["HTTP-Code"], __METHOD__);
+            return;
         }
 
-        $this->format = (!in_array($format, $this->formats, true) ? $this->format : $format);
+        $this->format = (in_array($format, $this->formats, true) ? $format : $this->format);
         $this->url = $header['x-storage-url'];
-        $this->token = array("X-Auth-Token: {$header['x-storage-token']}");
+        $this->token = ['X-Auth-Token: ' . $header['x-storage-token']];
     }
 
     /**
@@ -82,8 +89,10 @@ class SelectelStorage
      */
     protected function error($code, $message)
     {
-        if (self::$throwExceptions)
+        if (self::$throwExceptions) {
             throw new SelectelStorageException($message, $code);
+        }
+
         return $code;
     }
 
@@ -111,12 +120,13 @@ class SelectelStorage
      */
     protected static function getX($headers, $prefix = 'x-')
     {
-        $result = array();
+        $result = [];
         foreach ($headers as $key => $value) {
             if (stripos($key, $prefix) === 0) {
                 $result[$key] = $value;
             }
         }
+        
         return $result;
     }
 
@@ -131,11 +141,7 @@ class SelectelStorage
      */
     public function listContainers($limit = 10000, $marker = '', $format = null)
     {
-        $params = array(
-            'limit' => $limit,
-            'marker' => $marker,
-            'format' => (!in_array($format, $this->formats, true) ? $this->format : $format)
-        );
+        $params = ['limit' => $limit, 'marker' => $marker, 'format' => (in_array($format, $this->formats, true) ? $format : $this->format)];
 
         $cont = SCurl::init($this->url)
             ->setHeaders($this->token)
@@ -154,12 +160,10 @@ class SelectelStorage
      * Create container by name.
      * Headers for
      *
-     * @param string $name
      * @param array $headers
-     *
      * @return SelectelContainer
      */
-    public function createContainer($name, $headers = array())
+    public function createContainer(string $name, $headers = [])
     {
         $headers = array_merge($this->token, $headers);
         $info = SCurl::init($this->url . $name)
@@ -167,7 +171,7 @@ class SelectelStorage
             ->request("PUT")
             ->getInfo();
 
-        if (!in_array($info["http_code"], array(201, 202))) {
+        if (!in_array($info["http_code"], [201, 202])) {
             return $this->error($info["http_code"], __METHOD__);
         }
 
@@ -177,11 +181,10 @@ class SelectelStorage
     /**
      * Select container by name
      *
-     * @param string $name
      *
      * @return SelectelContainer
      */
-    public function getContainer($name)
+    public function getContainer(string $name)
     {
         $url = $this->url . $name;
         $headers = SCurl::init($url)
@@ -189,7 +192,7 @@ class SelectelStorage
             ->request("HEAD")
             ->getHeaders();
 
-        if (!in_array($headers["HTTP-Code"], array(204))) {
+        if ($headers["HTTP-Code"] != 204) {
             return $this->error($headers["HTTP-Code"], __METHOD__);
         }
 
@@ -199,18 +202,17 @@ class SelectelStorage
     /**
      * Delete container or object by name
      *
-     * @param string $name
      *
      * @return integera
      */
-    public function delete($name)
+    public function delete(string $name)
     {
         $info = SCurl::init($this->url . $name)
             ->setHeaders($this->token)
             ->request("DELETE")
             ->getInfo();
 
-        if (!in_array($info["http_code"], array(204))) {
+        if ($info["http_code"] != 204) {
             return $this->error($info["http_code"], __METHOD__);
         }
 
@@ -225,23 +227,22 @@ class SelectelStorage
      *
      * @return array
      */
-    public function copy($origin, $destin)
+    public function copy(string $origin, $destin)
     {
         $url = parse_url($this->url);
         $destin = $url['path'] . $destin;
-        $headers = array_merge($this->token, array("Destination: {$destin}"));
-        $info = SCurl::init($this->url . $origin)
+        $headers = array_merge($this->token, ['Destination: ' . $destin]);
+
+        return SCurl::init($this->url . $origin)
             ->setHeaders($headers)
             ->request("COPY")
             ->getResult();
-
-        return $info;
     }
 
     public function setContainerHeaders($name, $headers)
     {
         $headers = $this->getX($headers, "X-Container-Meta-");
-        if (get_class($this) != 'SelectelStorage') {
+        if (get_class($this) !== 'SelectelStorage') {
             return 0;
         }
 
@@ -256,11 +257,11 @@ class SelectelStorage
      *
      * @return integer
      */
-    protected function setMetaInfo($name, $headers)
+    protected function setMetaInfo(string $name, $headers)
     {
-        if (get_class($this) == 'SelectelStorage') {
+        if (get_class($this) === 'SelectelStorage') {
             $headers = $this->getX($headers, "X-Container-Meta-");
-        } elseif (get_class($this) == 'SelectelContainer') {
+        } elseif (get_class($this) === 'SelectelContainer') {
             $headers = $this->getX($headers, "X-Container-Meta-");
         } else {
             return 0;
@@ -271,7 +272,7 @@ class SelectelStorage
             ->request("POST")
             ->getInfo();
 
-        if (!in_array($info["http_code"], array(204))) {
+        if ($info["http_code"] != 204) {
             return $this->error($info["http_code"], __METHOD__);
         }
 
@@ -318,20 +319,19 @@ class SelectelStorage
     /**
      * Set X-Account-Meta-Temp-URL-Key for temp file download link generation. Run it once and use key forever.
      *
-     * @param string $key
      *
      * @return integer
      */
-    public function setAccountMetaTempURLKey($key)
+    public function setAccountMetaTempURLKey(string $key)
     {
         $url = $this->url;
-        $headers = array_merge($this->token, array("X-Account-Meta-Temp-URL-Key: " . $key));
+        $headers = array_merge($this->token, ["X-Account-Meta-Temp-URL-Key: " . $key]);
         $res = SCurl::init($url)
             ->setHeaders($headers)
             ->request("POST")
             ->getHeaders();
 
-        if (!in_array($res["HTTP-Code"], array(202))) {
+        if ($res["HTTP-Code"] != 202) {
             return $this->error($res ["HTTP-Code"], __METHOD__);
         }
 
@@ -348,11 +348,11 @@ class SelectelStorage
      *
      * @return string
      */
-    public function getTempURL($key, $path, $expires, $otherFileName = null)
+    public function getTempURL($key, string $path, $expires, $otherFileName = null)
     {
         $url = substr($this->url, 0, strlen($this->url) - 1);
 
-        $sig_body = "GET\n$expires\n$path";
+        $sig_body = "GET\n{$expires}\n{$path}";
 
         $sig = hash_hmac('sha1', $sig_body, $key);
 

@@ -1,11 +1,11 @@
 <?php
 
-namespace easmith\selectel\storage;
+namespace querty888\selectel\storage;
 
 /**
  * Created 06.09.14 23:47 by PhpStorm.
  *
- * PHP version 5
+ * PHP version 5 up to php 8.4 by querty888
  *
  * @category selectel-storage-php-class
  * @package class_package
@@ -14,7 +14,7 @@ namespace easmith\selectel\storage;
 class SCurl
 {
 
-    private static $instance = null;
+    private static $instance;
 
     /**
      * Curl resource
@@ -35,14 +35,14 @@ class SCurl
      *
      * @var array
      */
-    private $result = array();
+    private $result = [];
 
     /**
      * Request params
      *
      * @var array
      */
-    private $params = array();
+    private $params = [];
 
     /**
      * Curl wrapper
@@ -68,6 +68,7 @@ class SCurl
         if (defined('CURLOPT_BINARYTRANSFER')) {
             curl_setopt($this->ch, CURLOPT_BINARYTRANSFER, true);
         }
+        
 // TODO: big files
 // curl_setopt($this->ch, CURLOPT_RANGE, "0-100");
     }
@@ -83,6 +84,7 @@ class SCurl
         if (self::$instance == null) {
             self::$instance = new SCurl($url);
         }
+        
         return self::$instance->setUrl($url);
     }
 
@@ -107,8 +109,9 @@ class SCurl
     public function putFile($file)
     {
         if (!file_exists($file)) {
-            throw new SelectelStorageException("File '{$file}' does not exist");
+            throw new SelectelStorageException(sprintf("File '%s' does not exist", $file));
         }
+        
         $fp = fopen($file, "r");
         curl_setopt($this->ch, CURLOPT_INFILE, $fp);
         curl_setopt($this->ch, CURLOPT_INFILESIZE, filesize($file));
@@ -127,7 +130,7 @@ class SCurl
     public function request($method)
     {
         $this->method($method);
-        $this->params = array();
+        $this->params = [];
         curl_setopt($this->ch, CURLOPT_URL, $this->url);
 
         $response = explode("\r\n\r\n", curl_exec($this->ch));
@@ -135,7 +138,7 @@ class SCurl
         $this->result['info'] = curl_getinfo($this->ch);
         $this->result['header'] = $this->parseHead($response[0]);
         unset($response[0]);
-        $this->result['content'] = join("\r\n\r\n", $response);
+        $this->result['content'] = implode("\r\n\r\n", $response);
 
         // reinit
         $this->curlInit();
@@ -177,6 +180,7 @@ class SCurl
                 break;
             }
         }
+        
         return self::$instance;
     }
 
@@ -189,7 +193,7 @@ class SCurl
      */
     private function parseHead($head)
     {
-        $result = array();
+        $result = [];
         $code = explode("\r\n", $head);
         preg_match('/HTTP\/(.+) (\d+)/', $code[0], $codeMatches);
 
@@ -207,7 +211,7 @@ class SCurl
     public function putFileContents($contents)
     {
         $fp = fopen("php://temp", "rb+");
-        fputs($fp, $contents);
+        fwrite($fp, $contents);
         rewind($fp);
         curl_setopt($this->ch, CURLOPT_INFILE, $fp);
         curl_setopt($this->ch, CURLOPT_INFILESIZE, strlen($contents));
@@ -225,7 +229,7 @@ class SCurl
      */
     public function setHeaders($headers)
     {
-        $headers = array_merge(array("Expect:"), $headers);
+        $headers = array_merge(["Expect:"], $headers);
         curl_setopt($this->ch, CURLOPT_HTTPHEADER, $headers);
         return self::$instance;
     }
@@ -262,8 +266,6 @@ class SCurl
      */
     public function getHeaders($header = null)
     {
-        if (!is_null($header))
-            $this->result['header'][$header];
         return $this->result['header'];
     }
 
@@ -286,15 +288,7 @@ class SCurl
      */
     public function getInfo($info = null)
     {
-        if (!is_null($info)) {
-            $this->result['info'][$info];
-        }
         return $this->result['info'];
-    }
-
-    private function __clone()
-    {
-
     }
 
 }
