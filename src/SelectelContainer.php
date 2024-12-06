@@ -31,10 +31,9 @@ class SelectelContainer extends SelectelStorage
      * Getting container info
      *
      * @param boolean $refresh Refresh? Default false
-     *
-     * @return array
      */
-    public function getInfo($refresh = false)
+    #[\Override]
+    public function getInfo($refresh = false): array
     {
         if (!$refresh) {
             return $this->info;
@@ -96,10 +95,8 @@ class SelectelContainer extends SelectelStorage
      * @param string $path Path
      * @param string $delimiter Delimiter
      * @param string $format Format
-     *
-     * @return array|string
      */
-    public function listFiles($limit = 10000, $marker = null, $prefix = null, $path = null, $delimiter = null, $format = null)
+    public function listFiles($limit = 10000, $marker = null, $prefix = null, $path = null, $delimiter = null, $format = null): array|string
     {
         $params = ['limit' => $limit, 'marker' => $marker, 'prefix' => $prefix, 'path' => $path, 'delimiter' => $delimiter, 'format' => (in_array($format, $this->formats, true) ? $format : $this->format)];
 
@@ -172,10 +169,10 @@ class SelectelContainer extends SelectelStorage
      *
      * @return integer
      */
-    public function setFileHeaders($name, $headers)
+    public function setFileHeaders(string $name, $headers)
     {
         $headers = $this->getX($headers, "X-Container-Meta-");
-        if (get_class($this) !== 'SelectelContainer') {
+        if (static::class !== 'SelectelContainer') {
             return 0;
         }
 

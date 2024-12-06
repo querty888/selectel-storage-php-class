@@ -24,7 +24,7 @@ class SelectelStorage
      *
      * @var array()
      */
-    protected $token = [];
+    protected array $token;
     
     /**
      * Storage url
@@ -98,16 +98,14 @@ class SelectelStorage
 
     /**
      * Getting storage info
-     *
-     * @return array
      */
-    public function getInfo()
+    public function getInfo(): array
     {
         $head = SCurl::init($this->url)
             ->setHeaders($this->token)
             ->request("HEAD")
             ->getHeaders();
-        return $this->getX($head);
+        return static::getX($head);
     }
 
     /**
@@ -115,10 +113,8 @@ class SelectelStorage
      *
      * @param array $headers Array of headers
      * @param string $prefix Frefix for filtering
-     *
-     * @return array
      */
-    protected static function getX($headers, $prefix = 'x-')
+    protected static function getX($headers, $prefix = 'x-'): array
     {
         $result = [];
         foreach ($headers as $key => $value) {
@@ -139,7 +135,7 @@ class SelectelStorage
      *
      * @return string
      */
-    public function listContainers($limit = 10000, $marker = '', $format = null)
+    public function listContainers($limit = 10000, $marker = '', $format = null): array|string
     {
         $params = ['limit' => $limit, 'marker' => $marker, 'format' => (in_array($format, $this->formats, true) ? $format : $this->format)];
 
@@ -196,7 +192,7 @@ class SelectelStorage
             return $this->error($headers["HTTP-Code"], __METHOD__);
         }
 
-        return new SelectelContainer($url, $this->token, $this->format, $this->getX($headers));
+        return new SelectelContainer($url, $this->token, $this->format, static::getX($headers));
     }
 
     /**
@@ -239,10 +235,10 @@ class SelectelStorage
             ->getResult();
     }
 
-    public function setContainerHeaders($name, $headers)
+    public function setContainerHeaders(string $name, $headers)
     {
-        $headers = $this->getX($headers, "X-Container-Meta-");
-        if (get_class($this) !== 'SelectelStorage') {
+        $headers = static::getX($headers, "X-Container-Meta-");
+        if (static::class !== 'SelectelStorage') {
             return 0;
         }
 
@@ -259,10 +255,10 @@ class SelectelStorage
      */
     protected function setMetaInfo(string $name, $headers)
     {
-        if (get_class($this) === 'SelectelStorage') {
-            $headers = $this->getX($headers, "X-Container-Meta-");
-        } elseif (get_class($this) === 'SelectelContainer') {
-            $headers = $this->getX($headers, "X-Container-Meta-");
+        if (static::class === 'SelectelStorage') {
+            $headers = static::getX($headers, "X-Container-Meta-");
+        } elseif (static::class === 'SelectelContainer') {
+            $headers = static::getX($headers, "X-Container-Meta-");
         } else {
             return 0;
         }
@@ -288,20 +284,14 @@ class SelectelStorage
      */
     public function putArchive($archive, $path = null)
     {
-        $url = $this->url . $path . '?extract-archive=' . pathinfo($archive, PATHINFO_EXTENSION);
+        $url = $this->url . $path . '?extract-archive=' . pathinfo((string) $archive, PATHINFO_EXTENSION);
 
 
-        switch ($this->format) {
-            case 'json':
-                $headers = array_merge($this->token, ['Accept: application/json']);
-                break;
-            case 'xml':
-                $headers = array_merge($this->token, ['Accept: application/xml']);
-                break;
-            default:
-                $headers = array_merge($this->token, ['Accept: text/plain']);
-                break;
-        }
+        $headers = match ($this->format) {
+            'json' => array_merge($this->token, ['Accept: application/json']),
+            'xml' => array_merge($this->token, ['Accept: application/xml']),
+            default => array_merge($this->token, ['Accept: text/plain']),
+        };
 
         $info = SCurl::init($url)
             ->setHeaders($headers)
@@ -309,11 +299,11 @@ class SelectelStorage
             ->getContent();
 
         if ($this->format == '') {
-            return explode("\n", trim($info));
+            return explode("\n", trim((string) $info));
         }
 
 
-        return $this->format == 'json' ? json_decode($info, TRUE) : trim($info);
+        return $this->format == 'json' ? json_decode((string) $info, TRUE) : trim((string) $info);
     }
 
     /**
@@ -345,10 +335,8 @@ class SelectelStorage
      * @param string $path to file, including container name
      * @param integer $expires time in UNIX-format, after this time link will be voided
      * @param string $otherFileName custom filename if needed
-     *
-     * @return string
      */
-    public function getTempURL($key, string $path, $expires, $otherFileName = null)
+    public function getTempURL($key, string $path, $expires, $otherFileName = null): string
     {
         $url = substr($this->url, 0, strlen($this->url) - 1);
 

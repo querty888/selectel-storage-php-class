@@ -14,14 +14,14 @@ namespace querty888\selectel\storage;
 class SCurl
 {
 
-    private static $instance;
+    private static ?\querty888\selectel\storage\SCurl $instance = null;
 
     /**
      * Curl resource
      *
      * @var null|resource
      */
-    private $ch;
+    private \CurlHandle|bool $ch;
 
     /**
      * Current URL
@@ -32,17 +32,13 @@ class SCurl
 
     /**
      * Last request result
-     *
-     * @var array
      */
-    private $result = [];
+    private array $result = [];
 
     /**
      * Request params
-     *
-     * @var array
      */
-    private $params = [];
+    private array $params = [];
 
     /**
      * Curl wrapper
@@ -55,7 +51,7 @@ class SCurl
         $this->curlInit();
     }
 
-    private function curlInit()
+    private function curlInit(): void
     {
         $this->ch = curl_init($this->url);
         curl_setopt($this->ch, CURLOPT_ENCODING, 'gzip,deflate');
@@ -64,10 +60,6 @@ class SCurl
         curl_setopt($this->ch, CURLOPT_HEADER, true);
         curl_setopt($this->ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($this->ch, CURLOPT_SSL_VERIFYHOST, 2);
-        // Проверяем существование константы перед использованием для совместимости c php 8.4
-        if (defined('CURLOPT_BINARYTRANSFER')) {
-            curl_setopt($this->ch, CURLOPT_BINARYTRANSFER, true);
-        }
         
 // TODO: big files
 // curl_setopt($this->ch, CURLOPT_RANGE, "0-100");
@@ -79,7 +71,7 @@ class SCurl
      *
      * @return SCurl
      */
-    public static function init($url)
+    public static function init($url): ?\querty888\selectel\storage\SCurl
     {
         if (self::$instance == null) {
             self::$instance = new SCurl($url);
@@ -92,10 +84,8 @@ class SCurl
      * Set url for request
      *
      * @param string $url URL
-     *
-     * @return SCurl|null
      */
-    public function setUrl($url)
+    public function setUrl($url): ?\querty888\selectel\storage\SCurl
     {
         $this->url = $url;
         return self::$instance;
@@ -103,10 +93,9 @@ class SCurl
 
     /**
      * @param $file
-     * @return mixed
      * @throws SelectelStorageException
      */
-    public function putFile($file)
+    public function putFile($file): ?\querty888\selectel\storage\SCurl
     {
         if (!file_exists($file)) {
             throw new SelectelStorageException(sprintf("File '%s' does not exist", $file));
@@ -127,7 +116,7 @@ class SCurl
      *
      * @return SCurl
      */
-    public function request($method)
+    public function request($method): ?\querty888\selectel\storage\SCurl
     {
         $this->method($method);
         $this->params = [];
@@ -153,7 +142,7 @@ class SCurl
      *
      * @return SCurl
      */
-    private function method($method)
+    private function method($method): ?\querty888\selectel\storage\SCurl
     {
         switch ($method) {
             case "GET" : {
@@ -188,10 +177,8 @@ class SCurl
      * Header Parser
      *
      * @param array $head
-     *
-     * @return array
      */
-    private function parseHead($head)
+    private function parseHead(string $head): array
     {
         $result = [];
         $code = explode("\r\n", $head);
@@ -208,13 +195,13 @@ class SCurl
         return $result;
     }
 
-    public function putFileContents($contents)
+    public function putFileContents($contents): ?\querty888\selectel\storage\SCurl
     {
         $fp = fopen("php://temp", "rb+");
-        fwrite($fp, $contents);
+        fwrite($fp, (string) $contents);
         rewind($fp);
         curl_setopt($this->ch, CURLOPT_INFILE, $fp);
-        curl_setopt($this->ch, CURLOPT_INFILESIZE, strlen($contents));
+        curl_setopt($this->ch, CURLOPT_INFILESIZE, strlen((string) $contents));
         $this->request('PUT');
         fclose($fp);
         return self::$instance;
@@ -227,7 +214,7 @@ class SCurl
      *
      * @return SCurl
      */
-    public function setHeaders($headers)
+    public function setHeaders($headers): ?\querty888\selectel\storage\SCurl
     {
         $headers = array_merge(["Expect:"], $headers);
         curl_setopt($this->ch, CURLOPT_HTTPHEADER, $headers);
@@ -237,11 +224,10 @@ class SCurl
     /**
      * Set request parameters
      *
-     * @param array $params
      *
      * @return SCurl
      */
-    public function setParams($params)
+    public function setParams(array $params): ?\querty888\selectel\storage\SCurl
     {
         $this->params = $params;
         return self::$instance;
@@ -249,10 +235,8 @@ class SCurl
 
     /**
      * Getting info, headers and content of last response
-     *
-     * @return array
      */
-    public function getResult()
+    public function getResult(): array
     {
         return $this->result;
     }
